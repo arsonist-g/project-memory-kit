@@ -35,6 +35,20 @@ new_fixture() { # $1=目录名 ; 打印 fixture 路径
 # ---------- 1. 语法 ----------
 head1 "1. 语法检查"
 if bash -n "$SH" 2>/dev/null; then ok "pmem.sh 语法通过"; else no "pmem.sh 语法错误"; fi
+
+# 脚本自身的换行：CRLF 会让 Git Bash 直接报错（.gitattributes 已强制 LF）
+assert_eq "pmem.sh 自身为 LF" "0" "$(tr -cd '\r' < "$SH" | wc -c | tr -d ' ')"
+if [ -f "$PS1FILE" ]; then
+  assert_eq "pmem.ps1 自身为 LF" "0" "$(tr -cd '\r' < "$PS1FILE" | wc -c | tr -d ' ')"
+  # pmem.ps1 故意带 UTF-8 BOM：Windows PowerShell 5.1 读无 BOM 的 UTF-8 脚本会按 ANSI 码页解析，
+  # 中文字面量会乱码。BOM 只允许出现在脚本自身，不得进入任何生成物（由第 5 节逐文件核对）。
+  if [ "$(head -c 3 "$PS1FILE" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ]; then
+    ok "pmem.ps1 带 BOM（有意，为兼容 PS 5.1）"
+  else
+    printf '  \033[33m注意\033[0m pmem.ps1 无 BOM：PS 5.1 下中文可能乱码\n'
+  fi
+fi
+
 if ! command -v pwsh >/dev/null 2>&1; then
   printf '  \033[33mSKIP\033[0m 本机无 pwsh，跳过 pmem.ps1 语法检查\n'
 elif [ ! -f "$PS1FILE" ]; then
@@ -248,10 +262,19 @@ EOF
     no ".sh 与 .ps1 产出不同："
     diff -r "$A/project-memory" "$B/project-memory" 2>&1 | head -20 | sed 's/^/      /'
   fi
-  # 换行与 BOM
-  if grep -q $'\r' "$B/project-memory/DECISIONS.md" 2>/dev/null; then no ".ps1 产出含 CR"; else ok ".ps1 产出为 LF"; fi
-  if [ "$(head -c 3 "$B/project-memory/DECISIONS.md" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ]; then
-    no ".ps1 产出带 UTF-8 BOM"; else ok ".ps1 产出无 BOM"; fi
+  # 换行与 BOM：用字节计数，不用 grep（这个 Git Bash 的 grep -c $'\r' 不可靠）
+  cr=$(tr -cd '\r' < "$B/project-memory/DECISIONS.md" | wc -c | tr -d ' ')
+  assert_eq ".ps1 产出为 LF（CR 计数为 0）" "0" "$cr"
+  bom=$(head -c 3 "$B/project-memory/DECISIONS.md" | od -An -tx1 | tr -d ' \n')
+  if [ "$bom" = "efbbbf" ]; then no ".ps1 产出带 UTF-8 BOM"; else ok ".ps1 产出无 BOM"; fi
+
+  # 全部生成物扫一遍：既无 CR，也无 BOM
+  bad=0
+  for f in $(find "$B/project-memory" -name '*.md'); do
+    [ "$(tr -cd '\r' < "$f" | wc -c | tr -d ' ')" = "0" ] || { bad=$((bad+1)); echo "      含 CR: $f"; }
+    [ "$(head -c 3 "$f" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && { bad=$((bad+1)); echo "      含 BOM: $f"; }
+  done
+  assert_eq "全部生成物无 CR 无 BOM" "0" "$bad"
 else
   printf '  \033[33mSKIP\033[0m 本机无 pwsh 或缺 pmem.ps1，跳过一致性检查\n'
 fi
