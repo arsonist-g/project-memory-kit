@@ -137,6 +137,15 @@ sed -i 's/（一句话说清这个项目是什么。）/一个测试项目。/' 
 bash "$SH" gen "$PM" >/dev/null 2>&1
 assert_contains "手写块内容被保留" '一个测试项目。' "$(cat "$PM/CONTEXT.md")"
 
+# 手写块之外的内容必须被重写掉（否则 HANDWRITTEN:END 标记形同虚设）
+printf '\n块外内容，应被生成器清掉\n' >> "$PM/CONTEXT.md"
+bash "$SH" gen "$PM" >/dev/null 2>&1
+if grep -q '块外内容' "$PM/CONTEXT.md"; then
+  no "手写块之外的内容未被清除（END 标记没起作用）"
+else
+  ok "手写块之外的内容被重写（END 标记说话算话）"
+fi
+
 # ---------- 3. 五项校验的负例 ----------
 head1 "3. 校验负例（每条都必须被拒绝，退出码非零）"
 neg() { # $1=desc $2=文件名 $3=内容

@@ -317,9 +317,13 @@ gen_context() { # $1=pm
   ctx="$1/CONTEXT.md"
   [ -f "$ctx" ] || return 0
 
-  # 保留手写块（含标记行本身）
+  # 保留手写块（含两行标记本身）。块外的一切都是生成区，会被重写。
   if grep -qF "$HW_BEGIN" "$ctx"; then
-    awk -v b="$HW_BEGIN" 'index($0,b){p=1} p{print}' "$ctx" > "$ctx.hw.tmp"
+    awk -v b="$HW_BEGIN" -v e="$HW_END" '
+      index($0,b){ p=1 }
+      p{ print }
+      p && index($0,e){ exit }
+    ' "$ctx" > "$ctx.hw.tmp"
   else
     : > "$ctx.hw.tmp"
   fi

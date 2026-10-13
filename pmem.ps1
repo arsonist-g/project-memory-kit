@@ -438,12 +438,13 @@ function New-Context([string]$pm) {
   $ctx = Join-Path $pm 'CONTEXT.md'
   if (-not [System.IO.File]::Exists($ctx)) { return }
 
-  # 保留手写块（含标记行本身）
+  # 保留手写块（含两行标记本身）。块外的一切都是生成区，会被重写。
   $p = $false
   $hw = @()
   foreach ($ln in @(Split-Lines (Read-FileText $ctx))) {
     if ($ln.Contains($HW_BEGIN)) { $p = $true }
     if ($p) { $hw += $ln }
+    if ($p -and $ln.Contains($HW_END)) { break }
   }
   $hwText = ''
   if ($hw.Count -gt 0) { $hwText = ($hw -join "`n") + "`n" }
