@@ -287,15 +287,15 @@ gen_research_index() { # $1=pm
     printf '%s\n\n' "$GEN_MARK"
     printf '# research 索引\n\n'
     printf '调研与验证报告的主题总表。**报告本体只读归档**：结论变了写新的一份，不改旧的。\n\n'
-    printf '| 主题 | 报告数 | |\n|---|---|---|\n'
+    printf '| 主题 | 报告数 |\n|---|---|\n'
     n=0
     for t in $(ls_topics "$1"); do
       top=$(basename "$t")
       c=$(ls_rep "$t" | grep -c . || true)
-      printf '| [%s](%s/_index.md) | %s | |\n' "$top" "$top" "$c"
+      printf '| [%s](%s/_index.md) | %s |\n' "$top" "$top" "$c"
       n=1
     done
-    [ "$n" -eq 1 ] || printf '| —— | 0 | 尚无调研报告 |\n'
+    [ "$n" -eq 1 ] || printf '| —— | 0 |\n'
   } > "$1/research/_index.md.tmp" && mv "$1/research/_index.md.tmp" "$1/research/_index.md"
 
   for t in $(ls_topics "$1"); do

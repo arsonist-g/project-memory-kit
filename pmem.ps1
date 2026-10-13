@@ -409,15 +409,15 @@ function New-ResearchIndex([string]$pm) {
   [void]$sb.Append($GEN_MARK + "`n`n")
   [void]$sb.Append("# research 索引`n`n")
   [void]$sb.Append("调研与验证报告的主题总表。**报告本体只读归档**：结论变了写新的一份，不改旧的。`n`n")
-  [void]$sb.Append("| 主题 | 报告数 | |`n|---|---|---|`n")
+  [void]$sb.Append("| 主题 | 报告数 |`n|---|---|`n")
   $n = 0
   foreach ($t in @(Get-Topics $pm)) {
     $top = [System.IO.Path]::GetFileName($t)
     $c = @(Get-Reports $t).Count
-    [void]$sb.Append("| [$top]($top/_index.md) | $c | |`n")
+    [void]$sb.Append("| [$top]($top/_index.md) | $c |`n")
     $n = 1
   }
-  if ($n -ne 1) { [void]$sb.Append("| —— | 0 | 尚无调研报告 |`n") }
+  if ($n -ne 1) { [void]$sb.Append("| —— | 0 |`n") }
   Write-FileAtomic (Join-Path $pm 'research/_index.md') $sb.ToString()
 
   foreach ($t in @(Get-Topics $pm)) {

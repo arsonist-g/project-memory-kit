@@ -1,5 +1,5 @@
 <!-- GENERATED — 由 pmem 生成，请勿手改 -->
-> 更新于 2026-10-13 · HEAD ??????
+> 更新于 2026-10-13 · HEAD 379ec6 · +uncommitted
 > 决策 2 条 / 2 个域 · 开放问题 1 条 · 调研报告 2 份
 
 <!-- HANDWRITTEN:BEGIN -->
